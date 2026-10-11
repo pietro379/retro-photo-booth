@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="tr" class="intro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photobooth</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Special Elite', monospace;
+      min-height: 100vh;
+      color: #fbf1e0;
+    }
+    /* Kalın plastik TV çerçevesi */
+    .tv-frame {
+      background: linear-gradient(145deg, #fff6e6, #f0e0c4 55%, #dcc7a3);
+      border-radius: 36px;
+      padding: 28px;
+      box-shadow:
+        inset 0 3px 6px rgba(255,255,255,.8),
+        inset 0 -6px 10px rgba(120,70,40,.25),
+        0 18px 40px rgba(40,0,6,.6),
+        0 0 0 4px #c8323c;
+    }
+    /* Tüplü ekran: eğimli cam */
+    .crt {
+      position: relative;
+      aspect-ratio: 4 / 3;
+      border-radius: 28px / 34px;
+      background: #120a0c;
+      overflow: hidden;
+      box-shadow: inset 0 0 60px rgba(0,0,0,.9), inset 0 0 0 6px #1b1b1b, 0 0 0 3px #d9c8a8;
+    }
+    .crt::before { /* tarama çizgileri */
+      content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,.05) 0 1px, transparent 1px 4px);
+    }
+    .crt::after { /* cam parlaması */
+      content: ""; position: absolute; inset: 0; z-index: 4; pointer-events: none;
+      background:
+        radial-gradient(ellipse at 30% 15%, rgba(255,255,255,.14), transparent 45%),
+        radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%);
+    }
+    .screen-text { font-family: 'VT323', monospace; letter-spacing: .08em; text-shadow: 0 0 8px rgba(255,220,180,.6); color: #ffe9cc; }
+    .blink { animation: blink 1.2s steps(2) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* Fiziksel, basılabilir tuşlar */
+    .key {
+      --c: #c0392b; --d: #7d2218;
+      position: relative; border: 0; cursor: pointer; width: 100%;
+      padding: 14px 8px 18px; border-radius: 14px;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--c) 85%, white), var(--c));
+      color: #fff7e6; font-family: inherit; font-size: .95rem; text-shadow: 0 1px 0 rgba(0,0,0,.45);
+      box-shadow: 0 8px 0 var(--d), 0 12px 14px rgba(0,0,0,.55), inset 0 2px 2px rgba(255,255,255,.45);
+      transform: translateY(0); transition: transform .08s, box-shadow .08s;
+    }
+    .key:hover { filter: brightness(1.08); }
+    .key:active, .key.active { transform: translateY(6px); box-shadow: 0 2px 0 var(--d), 0 4px 6px rgba(0,0,0,.5), inset 0 2px 6px rgba(0,0,0,.35); }
+    .key .led { display:block; width:10px; height:10px; margin:0 auto 6px; border-radius:50%; background:#3a0d08; box-shadow: inset 0 1px 2px #000; }
+    .key.active .led { background:#ff6a4d; box-shadow: 0 0 10px 3px #ff6a4d; }
+    .key small { display:block; opacity:.8; font-size:.7rem; }
+    .k-cream { --c:#fbf1e0; --d:#c9b48f; color:#7a1620; text-shadow:none; }
+    .k-red   { --c:#e63946; --d:#9b1623; }
+    .k-wine  { --c:#8a1c27; --d:#4a0b13; }
+    .key .brand { display:block; font-size:.62rem; letter-spacing:.2em; text-transform:uppercase; opacity:.75; }
+    .key .model { display:block; font-size:.95rem; line-height:1.15; margin:2px 0 4px; }
+    /* Kompakt kamera tuşları (sağ sütun) */
+    .key { padding: 8px 6px 11px; border-radius: 10px;
+      box-shadow: 0 5px 0 var(--d), 0 8px 10px rgba(0,0,0,.5), inset 0 2px 2px rgba(255,255,255,.4); }
+    .key:active, .key.active { transform: translateY(4px);
+      box-shadow: 0 1px 0 var(--d), 0 3px 5px rgba(0,0,0,.5), inset 0 2px 6px rgba(0,0,0,.35); }
+    .key .led { width: 7px; height: 7px; margin: 0 auto 4px; }
+    .key .brand { font-size: .52rem; letter-spacing: .16em; }
+    .key .model { font-size: .78rem; margin: 1px 0 2px; }
+    .key small { font-size: .58rem; }
+    /* Kamera / şablon sekmeleri */
+    .tabs { display:flex; gap:4px; padding:4px; margin-bottom:14px; border-radius:12px; background: rgba(40,0,6,.45); box-shadow: inset 0 2px 6px rgba(0,0,0,.5); }
+    .tab { flex:1; border:0; cursor:pointer; padding:8px 6px; border-radius:9px; font-family:inherit; font-size:.72rem; letter-spacing:.22em; color:#fbf1e0; background:transparent; transition: background .1s, color .1s; }
+    .tab:hover { background: rgba(255,246,230,.15); }
+    .tab.active { background: linear-gradient(180deg,#fff6e6,#ead8b8); color:#7a1620; box-shadow: 0 2px 0 #b79c6e, inset 0 1px 1px #fff; }
+    .tab.has-selection::after { content:" ●"; color:#ff6a6a; font-size:.7em; letter-spacing:0; }
+    .tab.active.has-selection::after { color:#d02a37; }
+    .tab-stack { display:grid; max-height: max(460px, calc(100vh - 340px)); overflow-y: auto; padding: 0 6px 10px 2px; margin-right: -4px;
+      scrollbar-width: thin; scrollbar-color: rgba(255,240,215,.45) transparent; }
+    .tab-stack::-webkit-scrollbar { width: 8px; }
+    .tab-stack::-webkit-scrollbar-thumb { background: rgba(255,240,215,.4); border-radius: 8px; }
+    .tab-stack::-webkit-scrollbar-track { background: transparent; }
+    .tab-panel { grid-area: 1 / 1; }
+    .tab-panel.off { visibility:hidden; pointer-events:none; }
+    /* Şablon tuşları: küçük düzen ikonu */
+    .tpl-icon { display:block; margin: 2px auto 5px; }
+    /* Şablon kareleri (küçük resimler) */
+    .slot-bar { margin-top: 16px; padding: 12px 14px; border-radius: 14px; background: rgba(255,246,230,.10); border: 2px solid rgba(255,240,215,.35); }
+    .slot-bar.hidden { display: none; }
+    .slot-title { font-size: .6rem; letter-spacing: .22em; opacity: .7; text-align: center; margin: 0 0 10px; }
+    .slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    .slot { position: relative; height: 62px; border-radius: 8px; cursor: pointer; background: rgba(40,0,6,.4) center / cover no-repeat;
+      border: 2px dashed rgba(255,240,215,.55); color: #fbf1e0; transition: transform .08s, border-color .1s; }
+    .slot:hover { transform: translateY(-2px); border-color: #fff; }
+    .slot.filled { border-style: solid; border-color: rgba(255,240,215,.8); }
+    .slot.target { border-color: #ff6a6a; box-shadow: 0 0 0 2px rgba(255,106,106,.5); }
+    .slot .n { position: absolute; left: 4px; top: 1px; font-size: .62rem; text-shadow: 0 1px 2px #000; }
+    .slot .plus { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; opacity: .8; }
+    .slot .x { position: absolute; right: 2px; top: 2px; width: 18px; height: 18px; border: 0; border-radius: 50%; cursor: pointer;
+      background: rgba(20,0,4,.8); color: #fff; font-size: .6rem; line-height: 18px; padding: 0; }
+    .slot .x:hover { background: #d02a37; }
+    /* Ekrana dokunarak fotoğraf yükleme */
+    .crt { cursor: pointer; }
+    .crt:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+    .screen-hint { position: absolute; left: 0; right: 0; bottom: 14px; z-index: 5; text-align: center; pointer-events: none;
+      font-family: 'VT323', monospace; font-size: 1.25rem; letter-spacing: .1em; color: #ffe9cc;
+      text-shadow: 0 0 6px rgba(0,0,0,.9), 0 0 10px rgba(255,220,180,.6); opacity: 0; transition: opacity .15s; }
+    .screen-hint.hidden { display: none; }
+    .crt:hover .screen-hint, .crt:focus-visible .screen-hint { opacity: .95; }
+    .format-note { margin: 0; font-size: .65rem; letter-spacing: .06em; opacity: .75; line-height: 1.3; }
+    /* İndirmeden önce kabin flaşı: hızlı patlar, yavaş söner */
+    #flash { position: fixed; inset: 0; z-index: 900; pointer-events: none; opacity: 0;
+      background: radial-gradient(ellipse at 45% 40%, #ffffff 0%, #fffaf0 55%, #fff1d6 100%); }
+    #flash.fire { animation: shutter-flash .8s cubic-bezier(.1,.7,.3,1) forwards; }
+    @keyframes shutter-flash { 0% { opacity: 0; } 7% { opacity: 1; } 24% { opacity: 1; } 100% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { #flash { display: none; } }
+    /* Deklanşör sesi aç/kapat */
+    .sound-btn { flex-shrink: 0; width: 38px; height: 38px; border: 0; border-radius: 10px; cursor: pointer; font-size: 1rem; line-height: 1;
+      background: rgba(40,0,6,.45); color: #fbf1e0; box-shadow: inset 0 2px 6px rgba(0,0,0,.5); transition: background .1s; }
+    .sound-btn:hover { background: rgba(255,246,230,.18); }
+    .sound-btn[aria-pressed="false"] { opacity: .6; }
+    /* Dosya adı alanı */
+    .name-field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; padding: 0 10px; border-radius: 10px;
+      background: #fff6e6; border: 2px solid #d9c8a8; box-shadow: inset 0 2px 4px rgba(120,70,40,.18); cursor: text; }
+    .name-field:focus-within { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.55), inset 0 2px 4px rgba(120,70,40,.18); }
+    .name-field input { flex: 1; min-width: 0; padding: 9px 0; border: 0; outline: 0; background: transparent; color: #7a1620; font-family: inherit; font-size: .9rem; }
+    .name-field input::placeholder { color: #b08c78; opacity: 1; }
+    .name-field .ext { color: #a87c5a; font-size: .85rem; flex-shrink: 0; }
+    .k-sand { --c:#ecd9b4; --d:#b39b6f; color:#6b0f1a; text-shadow:none; }
+    .tv-frame { padding: 22px; border-radius: 30px; }
+    /* Masaüstünde ekran, sol sütunun tüm yüksekliğini ve genişliğini kaplar (sağ sütunla aynı boyda biter) */
+    @media (min-width: 1024px) {
+      .tv-frame { flex: 1; display: flex; flex-direction: column; }
+      .crt { aspect-ratio: auto; flex: 1; min-height: 460px; }
+    }
+    /* Açılış: perde iki yana toplanır, sonra kabine doğru yaklaşılır (curtain.js) */
+    #curtain { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1000; pointer-events: none; background: #2a160b; }
+    #backdrop {
+      position: fixed; inset: -30%; z-index: -1;
+      /* Kabin arka planı: kırmızı-krem dikey çizgiler + loş kenar karartması (görünür alana göre ayarlı) */
+      background:
+        radial-gradient(ellipse 32vw 32vh at 80vw 70vh, rgba(255,235,205,.10), transparent),
+        radial-gradient(ellipse 70.7vw 70.7vh at 80vw 75vh, rgba(20,0,4,.35) 0%, rgba(20,0,4,.82) 100%),
+        repeating-linear-gradient(90deg, #c1272d 0 56px, #f4e3c1 56px 112px);
+    }
+    html { background: #2a0a10; }
+    /* Perde kapalıyken kabin uzakta ve loş; perde açılınca içeri girilir */
+    html.intro #backdrop, html.intro main { transform: scale(.72); filter: brightness(.45); }
+    html.intro main { transform-origin: 50% 40vh; }
+    html.entering #backdrop, html.entering main { animation: dolly-in 2.2s cubic-bezier(.2,.75,.25,1) both; }
+    html.entering main { transform-origin: 50% 40vh; }
+    @keyframes dolly-in { from { transform: scale(.72); filter: brightness(.45); } to { transform: scale(1); filter: brightness(1); } }
+
+    .group-title { font-size:.58rem; letter-spacing:.28em; opacity:.6; margin:0 0 9px 3px; }
+    .key .led { background:#ffffff55 !important; }
+    .key.active .led { background:#fff !important; box-shadow: 0 0 10px 3px #fff !important; }
+
+    .action {
+      cursor:pointer; border:0; font-family:inherit; border-radius:12px; padding:14px 22px;
+      background: linear-gradient(180deg,#fff6e6,#ead8b8); color:#7a1620;
+      box-shadow: 0 6px 0 #b79c6e, 0 10px 12px rgba(40,0,6,.5), inset 0 2px 2px rgba(255,255,255,.9);
+      transition: transform .08s, box-shadow .08s;
+    }
+    .action:active { transform: translateY(4px); box-shadow: 0 2px 0 #b79c6e, 0 3px 5px rgba(40,0,6,.5); }
+    .upload-btn { background: linear-gradient(180deg,#f0505c,#d02a37); color:#fff8ec; box-shadow: 0 6px 0 #8a1420, 0 10px 14px rgba(40,0,6,.55), inset 0 2px 2px rgba(255,255,255,.4); }
+    .upload-btn:active { box-shadow: 0 2px 0 #8a1420, 0 3px 5px rgba(40,0,6,.5); }
+    .action:disabled { opacity:.45; cursor:not-allowed; transform:none; box-shadow: 0 6px 0 #b79c6e, 0 10px 12px rgba(40,0,6,.5), inset 0 2px 2px rgba(255,255,255,.9); }
+    /* Format seçici: yan yana basılabilir üçlü tuş */
+    .fmt-group { display:flex; flex-wrap:wrap; border:0; padding:4px; margin:0; gap:4px; border-radius:12px; background: rgba(40,0,6,.45); box-shadow: inset 0 2px 6px rgba(0,0,0,.5); }
+    .fmt-group label { cursor:pointer; }
+    .fmt-group input { position:absolute; opacity:0; pointer-events:none; }
+    .fmt-group span { display:block; padding:7px 11px; border-radius:9px; font-size:.85rem; letter-spacing:.06em; color:#fbf1e0; transition: background .1s, color .1s; }
+    .fmt-group label:hover span { background: rgba(255,246,230,.15); }
+    .fmt-group input:checked + span { background: linear-gradient(180deg,#fff6e6,#ead8b8); color:#7a1620; box-shadow: 0 2px 0 #b79c6e, inset 0 1px 1px #fff; }
+    .fmt-group input:focus-visible + span { outline:2px solid #fff; outline-offset:2px; }
+    .panel { background: rgba(255,246,230,.10); border:2px solid rgba(255,240,215,.35); border-radius:16px; box-shadow: inset 0 0 20px rgba(40,0,6,.35); backdrop-filter: blur(2px); }
+  </style>
+</head>
+<body class="flex items-center justify-center p-4 md:p-8">
+  <!-- Perde animasyonu (curtain.js çizer) -->
+  <canvas id="curtain" aria-hidden="true"></canvas>
+  <!-- Fotoğraf çekilirken patlayan flaş (İndir'e basınca) -->
+  <div id="flash" aria-hidden="true"></div>
+  <!-- Kabin arka planı: ayrı katman olduğu için perde açılınca kabinle birlikte yaklaşır -->
+  <div id="backdrop" aria-hidden="true"></div>
+  <main class="w-full max-w-7xl">
+
+    <header class="text-center mb-5">
+      <h1 class="text-3xl md:text-4xl tracking-widest" style="text-shadow:0 2px 0 #6b0f1a, 0 0 14px rgba(255,225,190,.5)">★ PHOTOBOOTH ★</h1>
+      <p class="text-sm opacity-70 mt-1">Ekrana dokunup fotoğraf yükle, bir kamera ya da şablon seç.</p>
+    </header>
+
+    <!-- Solda ekran, sağda kamera seçimi ve çıktı: efekti seçerken sonucu aynı anda görürsün -->
+    <div class="grid lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-6 lg:gap-9 items-stretch">
+
+      <!-- Sol: Kabin Ekranı (dokununca fotoğraf yüklenir) -->
+      <div class="flex flex-col">
+        <section class="tv-frame">
+          <div class="crt" id="crt" role="button" tabindex="0" aria-label="Fotoğraf yüklemek için ekrana dokun">
+            <canvas id="boothCanvas" width="1200" height="900" class="absolute inset-0 w-full h-full object-contain z-[2] hidden"></canvas>
+            <div id="screen" class="absolute inset-0 flex flex-col items-center justify-center text-center z-[1]">
+              <p class="screen-text text-4xl md:text-5xl">FOTOĞRAF YOK</p>
+              <p class="screen-text text-xl md:text-2xl mt-2">YÜKLEMEK İÇİN EKRANA DOKUN<span class="blink">_</span></p>
+            </div>
+            <div id="screenHint" class="screen-hint hidden" aria-hidden="true"></div>
+          </div>
+          <div class="flex items-center justify-between mt-4 px-2">
+            <span class="text-xs tracking-widest text-[#8a1c27]">MODEL RB-1974</span>
+            <span class="flex items-center gap-2 text-xs text-[#8a1c27]">
+              <i class="inline-block w-3 h-3 rounded-full bg-red-600 shadow-[0_0_8px_2px_rgba(230,57,70,.8)]"></i> HAZIR
+            </span>
+          </div>
+        </section>
+
+        <!-- Şablon seçiliyken: her kare için ayrı fotoğraf (kareye tıkla ya da toplu yükle) -->
+        <div id="slotBar" class="slot-bar hidden">
+          <p class="slot-title">KARELER · ekrandan ya da buradan bir kareye dokun</p>
+          <div id="slots" class="slots"></div>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
+      </div>
+
+      <!-- Sağ: Kamera Seçimi + Format / İndir -->
+      <div class="space-y-4">
+        <section class="panel p-4">
+          <!-- Kamera veya şablon: ikisi aynı anda seçilemez -->
+          <div class="tabs" role="tablist" aria-label="Kamera veya şablon">
+            <button type="button" role="tab" class="tab active" aria-selected="true" data-tab="camera">KAMERA SEÇ</button>
+            <button type="button" role="tab" class="tab" aria-selected="false" data-tab="template">ŞABLON SEÇ</button>
+          </div>
+          <!-- İki liste aynı hücrede üst üste durur: sekme değişince sütun yüksekliği oynamaz -->
+          <div class="tab-stack">
+            <!-- Kamera tuşları app.js tarafından üretilir -->
+            <div id="cameraPanel" class="tab-panel space-y-4"></div>
+            <div id="templatePanel" class="tab-panel off space-y-4"></div>
+          </div>
+        </section>
+
+        <section class="panel p-3 space-y-3">
+          <div class="flex items-center gap-3">
+            <span class="text-xs opacity-60 tracking-widest shrink-0">ÇIKTI</span>
+            <label class="name-field">
+              <input id="fileName" type="text" maxlength="60" placeholder="Fotoğrafa bir isim ver" autocomplete="off" spellcheck="false" aria-label="Dosya adı">
+              <span id="fileExt" class="ext">.png</span>
+            </label>
+          </div>
+          <!-- Kaydetme biçimleri app.js tarafından üretilir -->
+          <fieldset id="formatGroup" class="fmt-group" aria-label="Dosya formatı"></fieldset>
+          <div class="flex items-center justify-between gap-3">
+            <p id="formatNote" class="format-note flex-1"></p>
+            <button type="button" id="soundBtn" class="sound-btn" aria-pressed="true" title="Deklanşör sesi: açık">🔊</button>
+            <button type="button" id="downloadBtn" class="action text-sm tracking-wider shrink-0" disabled>⬇ İNDİR</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+  </main>
+  <script src="curtain.js"></script>
+  <script src="encoders.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
