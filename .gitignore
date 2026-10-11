@@ -1,0 +1,17 @@
+# Bağımlılıklar ve derleme çıktıları
+node_modules/
+dist/
+
+# Günlükler
+*.log
+npm-debug.log*
+
+# İşletim sistemi ve editör dosyaları
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Ortam değişkenleri
+.env
+.env.*
