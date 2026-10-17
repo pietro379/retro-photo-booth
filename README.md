@@ -10,7 +10,8 @@ Sunucu, derleme adımı ya da paket gerektirmez. Düz HTML, CSS ve JavaScript il
 - **12 şablon:** tekli polaroid kartları, 3'lü ve 4'lü dikey şeritler, 2×2, 2×3 ve 3×3 kolajlar, 35 mm film şeridi. Şablonlarda fotoğraflara efekt uygulanmaz; her kareye ayrı bir fotoğraf eklenebilir.
 - **Ekrana dokunarak yükleme:** kamera modunda ekrana, şablon modunda ilgili kareye dokun.
 - **Kaydetme biçimleri:** JPEG, PNG, WebP, PDF, GIF, BMP ve TIFF (tarayıcı destekliyorsa AVIF). PDF, GIF, BMP ve TIFF kodlayıcıları `encoders.js` içinde, kütüphane kullanılmadan yazıldı.
-- **Fotoğraf kabini deneyimi:** açılışta fizik tabanlı perde animasyonu, indirmeden önce flaş ve deklanşör sesi (sesi kapatma düğmesiyle).
+- **Fotoğraf kabini deneyimi:** açılışta fizik tabanlı perde animasyonu, indirmeden önce flaş ve analog kamera sesi (sesi kapatma düğmesiyle).
+- **Bozuk para bölmesi:** indirmek için altın bir parayı sürükleyip bölmeye atmak gerekir.
 - **Dosya adı:** indirilen fotoğrafa istediğin ismi verebilirsin.
 
 ## Kullanım
@@ -32,6 +33,7 @@ Ardından `http://localhost:5173` adresini aç. Yüklenen fotoğraflar ve seçil
 | `index.html` | Sayfa yapısı, tema ve stiller |
 | `app.js` | Kamera ve şablon tanımları, efekt hatları, yükleme, indirme |
 | `curtain.js` | Açılış perdesi animasyonu |
+| `coin.js` | Bozuk para sürükle-bırak ile indirme |
 | `encoders.js` | PDF, GIF, BMP ve TIFF kodlayıcıları |
 | `dev-server.mjs` | Otomatik yenilemeli geliştirme sunucusu |
 
