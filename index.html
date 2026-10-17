@@ -127,6 +127,30 @@
       background: rgba(40,0,6,.45); color: #fbf1e0; box-shadow: inset 0 2px 6px rgba(0,0,0,.5); transition: background .1s; }
     .sound-btn:hover { background: rgba(255,246,230,.18); }
     .sound-btn[aria-pressed="false"] { opacity: .6; }
+    /* Bozuk para bölmesi ve altın paralar */
+    .coin-area { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-top: 4px; }
+    .coin-tray { display: flex; align-items: center; gap: 10px; min-height: 52px; }
+    .coin { position: relative; width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0; cursor: grab; touch-action: none; user-select: none; z-index: 20;
+      background: radial-gradient(circle at 32% 28%, #fff3b0 0%, #f6c93b 38%, #c98f10 78%, #8f600a 100%);
+      box-shadow: inset 0 0 0 3px #e8b22a, inset 0 0 0 5px rgba(255,243,176,.55), 0 4px 0 #8f600a, 0 7px 10px rgba(0,0,0,.5);
+      display: flex; align-items: center; justify-content: center; color: #8a5a06; font-size: 1.15rem; text-shadow: 0 1px 0 rgba(255,243,176,.8);
+      transition: transform .15s; }
+    .coin:hover { transform: translateY(-2px) rotate(-8deg); }
+    .coin.dragging { cursor: grabbing; transition: none; position: fixed; margin: 0; box-shadow: inset 0 0 0 3px #e8b22a, inset 0 0 0 5px rgba(255,243,176,.55), 0 10px 18px rgba(0,0,0,.55); transform: scale(1.12) rotate(-10deg); }
+    .coin.back { transition: left .25s ease-out, top .25s ease-out, transform .25s; }
+    .coin.swallow { transition: left .22s ease-in, top .22s ease-in, transform .22s ease-in, opacity .22s; transform: scale(.25) rotate(120deg); opacity: 0; }
+    .coin-ghost { width: 46px; height: 46px; flex-shrink: 0; }
+    .coin-machine { position: relative; flex: 1; max-width: 190px; padding: 8px 10px 22px; border-radius: 12px; text-align: center;
+      background: linear-gradient(180deg, #5a1a22, #3a0d13); border: 2px solid #d9c8a8;
+      box-shadow: inset 0 3px 8px rgba(0,0,0,.6), 0 0 0 2px rgba(40,0,6,.5); transition: box-shadow .15s, border-color .15s; }
+    .coin-machine.ready { border-color: #f6c93b; box-shadow: inset 0 3px 8px rgba(0,0,0,.6), 0 0 14px rgba(246,201,59,.55); }
+    .coin-machine.reject { animation: coin-shake .35s; }
+    @keyframes coin-shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    .coin-label { display: block; font-size: .55rem; letter-spacing: .3em; opacity: .75; margin-bottom: 6px; }
+    .coin-slit { display: block; width: 62%; height: 9px; margin: 0 auto; border-radius: 6px; background: #080203;
+      box-shadow: inset 0 2px 3px #000, 0 1px 0 rgba(255,240,215,.45); }
+    .coin-hint { position: absolute; left: 4px; right: 4px; bottom: 4px; font-size: .5rem; letter-spacing: .04em; line-height: 1.15; opacity: .38; pointer-events: none; }
+    @media (prefers-reduced-motion: reduce) { .coin, .coin.back, .coin.swallow { transition: none; } .coin-machine.reject { animation: none; } }
     /* Dosya adı alanı */
     .name-field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; padding: 0 10px; border-radius: 10px;
       background: #fff6e6; border: 2px solid #d9c8a8; box-shadow: inset 0 2px 4px rgba(120,70,40,.18); cursor: text; }
@@ -257,7 +281,17 @@
           <div class="flex items-center justify-between gap-3">
             <p id="formatNote" class="format-note flex-1"></p>
             <button type="button" id="soundBtn" class="sound-btn" aria-pressed="true" title="Deklanşör sesi: açık">🔊</button>
-            <button type="button" id="downloadBtn" class="action text-sm tracking-wider shrink-0" disabled>⬇ İNDİR</button>
+            <!-- Asıl indirme düğmesi: görünmez ama klavye/ekran okuyucu için duruyor; para bölmesi bunu tetikler -->
+            <button type="button" id="downloadBtn" class="sr-only" disabled>⬇ İNDİR</button>
+          </div>
+          <!-- Bozuk para bölmesi: altın parayı sürükleyip yuvaya bırakınca indirme başlar -->
+          <div class="coin-area" id="coinArea">
+            <div class="coin-tray" id="coinTray" aria-hidden="true"></div>
+            <div class="coin-machine" id="coinSlot">
+              <span class="coin-label">BOZUK PARA</span>
+              <span class="coin-slit"></span>
+              <span class="coin-hint" id="coinHint">altın parayı sürükle, bölmeye at → fotoğraf insin</span>
+            </div>
           </div>
         </section>
       </div>
@@ -267,5 +301,6 @@
   <script src="curtain.js"></script>
   <script src="encoders.js"></script>
   <script src="app.js"></script>
+  <script src="coin.js"></script>
 </body>
 </html>
