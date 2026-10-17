@@ -1138,7 +1138,7 @@ async function exportBlob(key, title) {
 const flashEl = document.getElementById('flash');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-// Deklanşör sesi: dosya kullanmadan Web Audio ile üretilir (perde açılır, perde kapanır, hafif tok ses)
+// Flaş sesi: dosya kullanmadan Web Audio ile üretilir (flaş pop'u, deklanşör, şarj ıslığı, film makarası)
 const soundBtn = document.getElementById('soundBtn');
 let soundOn = true;
 try { soundOn = localStorage.getItem('photobooth-sound') !== '0'; } catch { /* depolama kapalıysa varsayılan: açık */ }
@@ -1167,14 +1167,19 @@ function playShutter() {
     master.gain.value = 0.6;
     master.connect(ac.destination);
 
-    // Hızla sönen, filtrelenmiş gürültü patlaması (mekanik "tık")
-    const click = (start, dur, freq, q, gain) => {
+    // Gürültü tamponu: üstel olarak sönen beyaz gürültü
+    const noise = (dur, power) => {
       const len = Math.max(1, Math.floor(ac.sampleRate * dur));
       const buf = ac.createBuffer(1, len, ac.sampleRate);
       const d = buf.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, power);
       const src = ac.createBufferSource();
       src.buffer = buf;
+      return src;
+    };
+    // Filtrelenmiş kısa gürültü darbesi (mekanik tık)
+    const tick = (start, dur, freq, q, gain) => {
+      const src = noise(dur, 3);
       const bp = ac.createBiquadFilter();
       bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = q;
       const g = ac.createGain();
@@ -1182,19 +1187,46 @@ function playShutter() {
       src.connect(bp); bp.connect(g); g.connect(master);
       src.start(t0 + start);
     };
-    click(0, 0.03, 3200, 1.2, 1.0);     // perde açılır
-    click(0.075, 0.05, 1500, 1.0, 0.9); // perde kapanır
 
-    // Gövdeden gelen tok ses
-    const osc = ac.createOscillator();
-    const og = ac.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(180, t0);
-    osc.frequency.exponentialRampToValueAtTime(70, t0 + 0.08);
-    og.gain.setValueAtTime(0.5, t0);
-    og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.09);
-    osc.connect(og); og.connect(master);
-    osc.start(t0); osc.stop(t0 + 0.1);
+    // 1) Küçük kameranın flaş "pop"u: kısa, kuru, çok sert değil
+    const pop = noise(0.09, 5);
+    const hp = ac.createBiquadFilter();
+    hp.type = 'highpass'; hp.frequency.value = 1400;
+    const pg = ac.createGain();
+    pg.gain.value = 0.9;
+    pop.connect(hp); hp.connect(pg); pg.connect(master);
+    pop.start(t0);
+    const body = ac.createOscillator();
+    const bg = ac.createGain();
+    body.type = 'sine';
+    body.frequency.setValueAtTime(210, t0);
+    body.frequency.exponentialRampToValueAtTime(70, t0 + 0.07);
+    bg.gain.setValueAtTime(0.5, t0);
+    bg.gain.exponentialRampToValueAtTime(0.001, t0 + 0.08);
+    body.connect(bg); bg.connect(master);
+    body.start(t0); body.stop(t0 + 0.09);
+
+    // 2) Mekanik deklanşör: perde açılır, kapanır (flaşla aynı anda)
+    tick(0.005, 0.03, 3000, 1.2, 0.8);
+    tick(0.065, 0.045, 1600, 1.0, 0.7);
+
+    // 3) Flaş kondansatörünün şarj ıslığı: tek kullanımlık kameralardaki gibi yükselen ince ses
+    const whine = ac.createOscillator();
+    const wg = ac.createGain();
+    whine.type = 'sawtooth';
+    const wf = ac.createBiquadFilter();
+    wf.type = 'lowpass'; wf.frequency.value = 5500;
+    whine.frequency.setValueAtTime(1500, t0 + 0.25);
+    whine.frequency.exponentialRampToValueAtTime(4800, t0 + 1.9);
+    wg.gain.setValueAtTime(0.0001, t0 + 0.25);
+    wg.gain.exponentialRampToValueAtTime(0.06, t0 + 0.5);
+    wg.gain.setValueAtTime(0.06, t0 + 1.7);
+    wg.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.95);
+    whine.connect(wf); wf.connect(wg); wg.connect(master);
+    whine.start(t0 + 0.25); whine.stop(t0 + 2.0);
+
+    // 4) Film makarası çevrilir: tırtıklı "çrr-çrr-çrr"
+    for (let i = 0; i < 7; i++) tick(0.5 + i * 0.075, 0.018, 2400 + (i % 2) * 500, 2, 0.35);
   } catch (err) {
     console.warn('Ses çalınamadı:', err);
   }
