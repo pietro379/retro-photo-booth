@@ -1,6 +1,15 @@
 # Photobooth
 
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)
+![Canvas API](https://img.shields.io/badge/Canvas-API-ff6a6a)
+![Sunucu yok](https://img.shields.io/badge/sunucu-yok-10b981)
+
 Tarayıcıda çalışan, retro temalı bir fotoğraf kabini uygulaması. Bir fotoğraf yükle, bir kamera ya da şablon seç, flaş patlasın ve sonucu istediğin biçimde indir.
+
+### 👉 [Canlı Demo](https://pietro379.github.io/retro-photo-booth/)
+
+<!-- Ekran görüntüsü: docs/ altına bir kare ekleyip burada göster (örnek fotoğraf yüklenmiş, kamera efekti seçili hâli). -->
 
 Sunucu, derleme adımı ya da paket gerektirmez. Düz HTML, CSS ve JavaScript ile yazıldı; tüm efektler Canvas API üzerinde uygulanır, bu yüzden indirilen dosyada da görünür.
 
